@@ -96,18 +96,14 @@ const Terminal = () => {
           {/* Data */}
           {!loading &&
             techStack.map(({ _id, category, items }) => (
-              <li key={_id} id={category} className="flex items-center">
-                <Check className="check" size={20} />
-                <h3>{category}</h3>
-                <ul>
-                  {items.map((item, i) => (
-                    <li key={i}>
-                      {item}
-                      {i < items.length - 1 ? "," : ""}
-                    </li>
-                  ))}
-                </ul>
-              </li>
+              <li key={_id} className="tech-row">
+  <Check className="check" size={18} />
+  <h3>{category}</h3>
+  <p className="skills">
+    {items.join(", ")}
+  </p>
+</li>
+
             ))}
         </ul>
 

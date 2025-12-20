@@ -411,3 +411,42 @@ body {
   border-radius: 6px;
   color: #000;
 }
+
+/* ================= TERMINAL TECH STACK FIX ================= */
+
+#terminal .techstack .content {
+  padding: 16px 0;
+  border-top: 1px dashed #d1d5db;
+  border-bottom: 1px dashed #d1d5db;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 🔒 LOCKED TERMINAL ROW */
+#terminal .techstack .content .tech-row {
+  display: grid;
+  grid-template-columns: 22px 140px 1fr;
+  align-items: start;
+  column-gap: 12px;
+}
+
+/* ✔ CHECK ICON */
+#terminal .techstack .check {
+  color: #00a154;
+  flex-shrink: 0;
+}
+
+/* CATEGORY */
+#terminal .techstack h3 {
+  font-weight: 600;
+  color: #00a154;
+  white-space: nowrap;
+}
+
+/* 🔥 SKILLS — PERFECT WRAPPING */
+#terminal .techstack .skills {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.5;
+}
