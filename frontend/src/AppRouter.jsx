@@ -14,7 +14,7 @@ import AboutDashboard from "./dashboard/pages/AboutPage";
 
 const AppRouter = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/">
       <Routes>
         {/* macOS Portfolio */}
         <Route path="/" element={<App />} />
