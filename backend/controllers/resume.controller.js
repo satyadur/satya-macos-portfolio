@@ -1,7 +1,5 @@
-// controllers/resumeController.js
+// controllers/resume.controller.js
 import Resume from "../models/Resume.js";
-import fs from "fs";
-import path from "path";
 
 export const uploadResume = async (req, res) => {
   try {
@@ -9,9 +7,8 @@ export const uploadResume = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    // Since it's a single resume, we'll update or insert (upsert)
     const resume = await Resume.findOneAndUpdate(
-      {}, // No specific filter, assumes single document
+      {},
       {
         data: req.file.buffer,
         contentType: req.file.mimetype,
@@ -23,29 +20,35 @@ export const uploadResume = async (req, res) => {
       .status(200)
       .json({ message: "Resume uploaded successfully", resumeId: resume._id });
   } catch (error) {
+    console.error("Upload error:", error);
     res
       .status(500)
       .json({ message: "Error uploading resume", error: error.message });
   }
 };
 
-const RESUME_PATH = path.join(process.cwd(), "uploads", "resume.pdf");
+export const getResume = async (req, res) => {
+  try {
+    const resume = await Resume.findOne({});
 
-export const getResume = (req, res) => {
-  if (!fs.existsSync(RESUME_PATH)) {
-    return res.status(404).send("Resume not found");
+    if (!resume) {
+      return res.status(404).json({ message: "Resume not found" });
+    }
+
+    // Set proper headers
+    res.set({
+      "Content-Type": resume.contentType || "application/pdf",
+      "Content-Length": resume.data.length,
+      "Content-Disposition": 'inline; filename="Durga_Satyanarayana_Kudupudi.pdf"',
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    });
+
+    // Send the binary data
+    res.send(resume.data);
+  } catch (error) {
+    console.error("Error fetching resume:", error);
+    res.status(500).json({ message: "Error retrieving resume" });
   }
-
-  const stat = fs.statSync(RESUME_PATH);
-
-  res.writeHead(200, {
-    "Content-Type": "application/pdf",
-    "Content-Length": stat.size,
-    "Content-Disposition": "inline; filename=resume.pdf",
-    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate", // disable caching
-    Pragma: "no-cache",
-    Expires: 0,
-  });
-
-  fs.createReadStream(RESUME_PATH).pipe(res);
 };
