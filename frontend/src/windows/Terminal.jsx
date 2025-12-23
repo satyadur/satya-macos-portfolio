@@ -30,7 +30,7 @@ const Terminal = () => {
       ignore = true;
     };
   }, []);
-  
+
   useEffect(() => {
     let ignore = false;
     const start = performance.now();
@@ -97,13 +97,10 @@ const Terminal = () => {
           {!loading &&
             techStack.map(({ _id, category, items }) => (
               <li key={_id} className="tech-row">
-  <Check className="check" size={18} />
-  <h3>{category}</h3>
-  <p className="skills">
-    {items.join(", ")}
-  </p>
-</li>
-
+                <Check className="check" size={18} />
+                <h3>{category}</h3>
+                <p className="skills">{items.join(", ")}</p>
+              </li>
             ))}
         </ul>
 

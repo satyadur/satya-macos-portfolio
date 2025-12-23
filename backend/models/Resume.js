@@ -1,21 +1,17 @@
-import mongoose from "mongoose";
+// models/Resume.js
+import mongoose from 'mongoose';
 
-const ResumeSchema = new mongoose.Schema(
-  {
-    fileName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    url: {
-      type: String,
-      required: true,
-    },
-    uploadedBy: {
-      type: String, // optional: admin username or ID
-    },
+const resumeSchema = new mongoose.Schema({
+  data: {
+    type: Buffer,
+    required: true
   },
-  { timestamps: true }
-);
+  contentType: {
+    type: String,
+    required: true
+  }
+});
 
-export default mongoose.model("Resume", ResumeSchema);
+const Resume = mongoose.model('Resume', resumeSchema);
+
+export default Resume;

@@ -1,12 +1,14 @@
-import express from "express";
-import { uploadResume, uploadResumeController, getResume } from "../controllers/resume.controller.js";
+// routes/resumeRoutes.js
+import express from 'express';
+import multer from 'multer';
+import { uploadResume, getResume } from '../controllers/resume.controller.js';
 
 const router = express.Router();
 
-// Admin upload
-router.post("/upload", uploadResume, uploadResumeController);
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-// Public get resume
-router.get("/", getResume);
+router.post('/insert-resume', upload.single('resume'), uploadResume);
+router.get('/get-resume', getResume);
 
 export default router;

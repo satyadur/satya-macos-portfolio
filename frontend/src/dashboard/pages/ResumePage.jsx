@@ -1,109 +1,218 @@
-import { useEffect, useState } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+// frontend/src/components/ResumeManager.js
+import React, { useState, useEffect, useRef } from "react";
 import api from "../../lib/axios";
 import { UploadCloud } from "lucide-react";
-import "react-pdf/dist/Page/AnnotationLayer.js";
-import "react-pdf/dist/Page/TextLayer.js";
 
-// ✅ Correct worker import for Vite
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.js",
-  import.meta.url
-).toString();
-
-const ResumePage = () => {
-  const [resumeUrl, setResumeUrl] = useState("");
+const ResumeManager = () => {
   const [file, setFile] = useState(null);
+  const [resumeUrl, setResumeUrl] = useState(null);
+  const [uploadStatus, setUploadStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
-  const fetchResume = async () => {
-    try {
-      const res = await api.get("/resume");
-      if (res.data?.url) {
-        const fullUrl = `${import.meta.env.VITE_API_URL.replace(/\/$/, "")}${
-          res.data.url
-        }?t=${Date.now()}`;
-
-        setResumeUrl(fullUrl);
-      } else {
-        setResumeUrl("");
-      }
-    } catch (err) {
-      console.error("No resume found", err);
-      setResumeUrl("");
+  const handleFileChange = (e) => {
+    const selected = e.target.files[0];
+    if (selected && selected.type !== "application/pdf") {
+      setUploadStatus("Please select a valid PDF file");
+      return;
     }
+    setFile(selected);
   };
 
-  useEffect(() => {
-    fetchResume();
-  }, []);
+  const handleUpload = async () => {
+    if (!file) {
+      setUploadStatus("No file selected");
+      return;
+    }
 
-  const handleFileChange = (e) => setFile(e.target.files[0]);
-
-  const handleUpload = async (e) => {
-    e.preventDefault();
-    if (!file) return alert("Select a PDF to upload");
-
-    setLoading(true);
     const formData = new FormData();
     formData.append("resume", file);
 
+    setLoading(true);
     try {
-      await api.post("/resume/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      alert("✅ Resume uploaded successfully!");
-      fetchResume();
+      await api.post("/resume/insert-resume", formData);
+      setUploadStatus("✅ Resume uploaded successfully!");
       setFile(null);
-    } catch (err) {
-      console.error(err);
-      alert("❌ Upload failed");
+      if (fileInputRef.current) fileInputRef.current.value = ""; // reset input
+      fetchResume();
+    } catch (error) {
+      console.error("Upload error:", error);
+      setUploadStatus("❌ Upload failed — check file or server");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="space-y-6 max-w-xl">
-      <h2 className="text-2xl font-bold">Resume Management</h2>
+  const fetchResume = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get("/resume/get-resume", {
+        responseType: "blob",
+        transformResponse: [],
+      });
 
+      if (response.data && response.data.size > 1000) {
+        const blob = new Blob([response.data], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+
+        if (resumeUrl) URL.revokeObjectURL(resumeUrl);
+        setResumeUrl(url);
+        setUploadStatus("📄 Resume loaded successfully");
+      } else {
+        setUploadStatus("No resume found on server");
+        setResumeUrl(null);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      setUploadStatus("❌ Failed to load resume — check network/console");
+      setResumeUrl(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchResume();
+    return () => resumeUrl && URL.revokeObjectURL(resumeUrl);
+  }, []);
+
+  return (
+    <div
+      style={{
+        padding: "20px",
+        maxWidth: "900px",
+        margin: "0 auto",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <h2 style={{ marginBottom: "20px" }}>Manage Your Resume</h2>
+
+      {/* Upload Box */}
+      <div
+        style={{
+          border: "2px dashed #007bff",
+          borderRadius: "12px",
+          padding: "40px",
+          textAlign: "center",
+          cursor: "pointer",
+          marginBottom: "20px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "10px",
+          transition: "border-color 0.3s",
+        }}
+        onClick={() => fileInputRef.current && fileInputRef.current.click()}
+      >
+        <UploadCloud size={48} color="#007bff" />
+        <span style={{ fontWeight: "bold", color: "#007bff" }}>
+          {file ? file.name : "Click or Drag PDF to Upload"}
+        </span>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/pdf"
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
+        <button
+          onClick={handleUpload}
+          disabled={!file || loading}
+          style={{
+            marginTop: "10px",
+            padding: "10px 25px",
+            background: "#28a745",
+            color: "#fff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: file && !loading ? "pointer" : "not-allowed",
+          }}
+        >
+          {loading ? "Uploading..." : "Upload"}
+        </button>
+      </div>
+
+      <p
+        style={{
+          color: uploadStatus.includes("success") ? "green" : "red",
+          fontWeight: "bold",
+          marginBottom: "20px",
+        }}
+      >
+        {uploadStatus || "Ready"}
+      </p>
+
+      {/* Refresh */}
+      <button
+        onClick={fetchResume}
+        disabled={loading}
+        style={{
+          padding: "8px 16px",
+          background: "#007bff",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          marginBottom: "30px",
+        }}
+      >
+        Refresh Preview
+      </button>
+
+      {/* Resume Preview */}
       {resumeUrl ? (
-        <div className="p-2 rounded shadow h-[600px]">
-          <iframe
-            src={resumeUrl}
-            title="Resume"
-            className="w-full h-full"
-            frameBorder="0"
-          />
+        <div>
+          <h3>Your Resume Preview</h3>
+          <div
+            style={{
+              border: "2px solid #ddd",
+              borderRadius: "12px",
+              overflow: "hidden",
+              boxShadow: "0 8px 25px rgba(0,0,0,0.1)",
+              background: "#fff",
+              height: "800px",
+              marginBottom: "20px",
+            }}
+          >
+            <iframe
+              src={resumeUrl}
+              title="Resume Preview"
+              width="100%"
+              height="100%"
+              style={{ border: "none" }}
+            >
+              Your browser does not support PDFs.
+              <a href={resumeUrl} download="My_Resume.pdf">
+                Download instead
+              </a>
+            </iframe>
+          </div>
+
+          <a
+            href={resumeUrl}
+            download="Durga_Satyanarayana_Kudupudi_Resume.pdf"
+            style={{
+              display: "inline-block",
+              padding: "12px 30px",
+              background: "#dc3545",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "8px",
+              fontWeight: "bold",
+              fontSize: "16px",
+            }}
+          >
+            📄 Download Resume
+          </a>
         </div>
       ) : (
-        <p className="text-gray-500">No resume uploaded yet</p>
+        !loading && (
+          <p style={{ fontStyle: "italic", color: "#666" }}>
+            No resume uploaded yet.
+          </p>
+        )
       )}
-
-      <form
-        onSubmit={handleUpload}
-        className="bg-white p-4 rounded shadow flex flex-col md:flex-row gap-4 items-center"
-      >
-        <label className="flex items-center text-indigo-500 gap-2 cursor-pointer bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
-          <UploadCloud className="w-5 h-5 text-indigo-500" />
-          {file ? file.name : "Choose PDF"}
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
-        <button
-          type="submit"
-          disabled={loading || !file}
-          className="bg-black text-white px-5 py-2 rounded-lg hover:bg-black/90 transition"
-        >
-          {loading ? "Uploading..." : "Upload / Update"}
-        </button>
-      </form>
     </div>
   );
 };
 
-export default ResumePage;
+export default ResumeManager;

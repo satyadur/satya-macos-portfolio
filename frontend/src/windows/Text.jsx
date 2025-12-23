@@ -9,7 +9,6 @@ const Text = () => {
   if (!data) return null;
 
   const { name, image, subtitle, description } = data;
-console.log(data);
 
   return (
     <>
