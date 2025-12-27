@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 
+import visitRoutes from "./routes/visit.routes.js";
 import projectRoutes from "./routes/project.routes.js";
 import blogRoutes from "./routes/blog.routes.js";
 import galleryRoutes from "./routes/gallery.routes.js";
@@ -24,6 +25,7 @@ app.use((err, req, res, next) => {
     message: err.message || "Internal Server Error",
   });
 });
+app.set("trust proxy", true);
 
 app.use("/api/projects", projectRoutes);
 app.use("/api/blogs", blogRoutes);
@@ -33,6 +35,7 @@ app.use("/api/about", aboutRoutes);
 app.use("/api/tech-stack", techStackRoutes);
 app.use("/api/resume", resumeRoutes);
 app.use("/api/uploads", express.static(path.join(path.resolve(), "uploads")));
+app.use("/api/visit", visitRoutes);
 
 app.get("/", (_, res) => res.send("🚀 Portfolio Backend Running"));
 

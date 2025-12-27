@@ -8,17 +8,24 @@ import {
   Text,
   Contact,
   Photos,
-  Query
+  Query,
 } from "#windows";
 import gsap from "gsap";
 import { Draggable } from "gsap/Draggable";
 import useProjects from "./hooks/useProjects";
 import BarLoader from "./components/BarLoader";
+import { useEffect } from "react";
+import api from "./lib/axios";
+import CookieConsent from "./components/CookieConsent";
 
 gsap.registerPlugin(Draggable);
 
 const App = () => {
-   const loading = useProjects();
+  const loading = useProjects();
+
+  useEffect(() => {
+    api.post("/visit").catch(() => {});
+  }, []);
 
   if (loading) {
     return <BarLoader />;
@@ -40,6 +47,8 @@ const App = () => {
       <Query />
 
       <Home />
+
+      <CookieConsent />
     </main>
   );
 };
